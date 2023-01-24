@@ -1,6 +1,4 @@
-//6281212747976-1458610958@g.us grup ULP
-//6282281162322-1572353572@g.us tempat mikir
-//6281373370820-1517467635@g.us DCC
+Ini merupakan aplisi bot yang dikembangakn menggunakan library whatsappweb.js
 
 BOT 1 CHANGELOG:    
 - MENGIRIM MESSAGE INFO KE NOMOR 6282269599529 DAN CONSOLE LOG
