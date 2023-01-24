@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "exceljs": "^4.3.0",
+    "moment": "^2.29.4",
+    "node-schedule": "^2.1.1",
+    "nodemon": "^2.0.20",
+    "openai": "^3.1.0",
+    "qrcode-terminal": "^0.12.0",
+    "string-similarity": "^4.0.4",
+    "whatsapp-web.js": "^1.19.2"
+  },
+  "name": "bot",
+  "version": "2.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node ./app.js",
+    "dev": "nodemon ./app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Affan",
+  "license": "ISC",
+  "description": "Aplikasi BOT Whatsapp"
+}
