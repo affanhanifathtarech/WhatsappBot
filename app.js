@@ -39,14 +39,14 @@ client2.on('ready', () => { log('BOT 2 READY');});
 client2.on('change_state', state => { log('BOT 2 CHANGE STATE', state);});
 client2.on('disconnected', (reason) => { log('BOT 2 Client was logged out', reason);});
 client2.on('message', async msg => {
-    messageInfoControl(msg,client,messageInfo); // MENGIRIM MESSAGE INFO KE NOMOR 6282269599529 DAN CONSOLE LOG
+    messageInfoControl(msg,client2,messageInfo); // MENGIRIM MESSAGE INFO KE NOMOR 6282269599529 DAN CONSOLE LOG
     handleLocMessage(msg);                      // HANDLE PESAN LOC
-    cekPiketCS(msg,client);                     // CEK PIKET CS
-    cekPiketDCC(msg,client);                    // CEK PIKET DCC
-    cekPiketCT(msg,client);                     // CEK PIKET CT
-    cekPiketYantek(msg,client);                 // CEK PIKET YANTEK
-    ping(msg,client);                           // PING
-    sendMessageToNumber(msg,client);            // KIRIM PESAN KE NOMOR TERTENTU
+    cekPiketCS(msg,client2);                     // CEK PIKET CS
+    cekPiketDCC(msg,client2);                    // CEK PIKET DCC
+    cekPiketCT(msg,client2);                     // CEK PIKET CT
+    cekPiketYantek(msg,client2);                 // CEK PIKET YANTEK
+    ping(msg,client2);                           // PING
+    sendMessageToNumber(msg,client2);            // KIRIM PESAN KE NOMOR TERTENTU
 });
 
 jadwal(client2,8,0);    //JADWAL OTOMATIS KIRIM PESAN PAGI

@@ -161,8 +161,8 @@ function cekPiketYantek(msg,client){
       piket('piketYantek').then(piketYantek => {
           client.sendMessage(msg.from, `*PETUGAS PIKET YANTEK*
           
-*Hari/Tanggal : ${piketYantek.tanggal}*
-*Waktu : ${piketYantek.periode}*
+Hari/Tanggal : ${piketYantek.tanggal}
+Waktu : ${piketYantek.periode}
   
 Yantek 1 : *${piketYantek.tjp1.piketSekarang}*
 Yantek 2 : *${piketYantek.tjp2.piketSekarang}*
