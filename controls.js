@@ -159,7 +159,8 @@ function cekPiketYantek(msg,client){
   // CEK PETUGAS PIKET YANTEK
   if (msg.body.toLowerCase() === 'cek piket yantek') {
       piket('piketYantek').then(piketYantek => {
-          client.sendMessage(msg.from, `𝗣𝗘𝗧𝗨𝗚𝗔𝗦 𝗣𝗜𝗞𝗘𝗧 𝗬𝗔𝗡𝗧𝗘𝗞
+          client.sendMessage(msg.from, `*PETUGAS PIKET YANTEK*
+          
 *Hari/Tanggal : ${piketYantek.tanggal}*
 *Waktu : ${piketYantek.periode}*
   
