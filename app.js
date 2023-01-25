@@ -1,5 +1,6 @@
 const qrcode = require('qrcode-terminal');
-const { Client, LocalAuth } = require('whatsapp-web.js');
+// const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, Location, List, Buttons, LocalAuth} = require('whatsapp-web.js');
 const {log, error} = require('./functions.js');
 const {jadwal, messageInfoControl, getCCDCCData, sendFromDCC, sendFromYandal, handleLocMessage, cekPiketCS, cekPiketDCC, cekPiketCT, cekPiketYantek, ping, sendMessageToNumber } = require('./controls.js');
 const client = new Client({ authStrategy: new LocalAuth({ clientId: "bot1" }),puppeteer: { headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe'}});
