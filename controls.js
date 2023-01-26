@@ -1,22 +1,14 @@
 const schedule = require('node-schedule');
 const { isCoordinate, formatString, search, readExcelData, piket, log } = require('./functions.js');
 
-function jadwal(client, hour, minute){
+function scheduler(client, number, message, hour, minute){
   const rule = new schedule.RecurrenceRule();
   rule.tz = 'Asia/Jakarta';
   rule.hour = hour;
   rule.minute = minute;
 
   schedule.scheduleJob(rule, function(){
-    piket('piketCT').then(piketCT => {
-      client.sendMessage("6281212747976-1458610958@g.us", `*PETUGAS PIKET CT*
-  
-*Petugas : ${piketCT.piketSekarang}*
-*Waktu   : ${piketCT.periode}*
-
-Petugas Selanjutnya : ${piketCT.piketSelanjutnya}
-Petugas Sebelum : ${piketCT.piketSebelum}`);
-      })
+      client.sendMessage(number,message);
   });
 }
 
@@ -37,6 +29,7 @@ function messageInfoControl(msg,client,messageInfo){
           client.sendMessage('6282269599529@c.us', "MessageInfo diaktifkan");
       }
   }
+  return messageInfo;
 }
 
 function getCCDCCData(msg){
@@ -155,7 +148,26 @@ Petugas Sebelum : ${piketCT.piketSebelum}`);
   }
 }
 
-function cekPiketYantek(msg,client){
+function cekPiketYantekAll(msg,client){
+  // CEK PETUGAS PIKET YANTEK
+  if (msg.body.toLowerCase() === 'cek piket yantek') {
+      piket('piketYantek').then(piketYantek => {
+          client.sendMessage(msg.from, `*PETUGAS PIKET YANTEK*
+          
+Hari/Tanggal : ${piketYantek.tanggal}
+Waktu : ${piketYantek.periode}
+  
+Yantek 1 : *${piketYantek.tjp1.piketSekarang}*
+Yantek 2 : *${piketYantek.tjp2.piketSekarang}*
+Yantek Tj. Binga : *${piketYantek.binga.piketSekarang}*
+Yantek Sijuk : *${piketYantek.sijuk.piketSekarang}*
+Yantek Badau : *${piketYantek.badau.piketSekarang}*
+Yantek Membalong : *${piketYantek.membalong.piketSekarang}*`);
+      });
+  }
+}
+
+function cekPiketYantek(posko,msg,client){
   // CEK PETUGAS PIKET YANTEK
   if (msg.body.toLowerCase() === 'cek piket yantek') {
       piket('piketYantek').then(piketYantek => {
@@ -194,8 +206,15 @@ async function sendMessageToNumber(msg,client){
   } 
 }
 
+function testButtons(msg,client,Buttons){
+if (msg.body.toLowerCase().startsWith('button')) {
+const button = new Buttons('Button body',[{ body: 'Some text' },{ body: 'Try clicking me (id:test)', id: 'test'},],'title','footer');
+client.sendMessage(msg.from, button);
+}
+}
+
 module.exports = { 
-    jadwal,             // MENGIRIM PESAN SESUAI JADWAL
+    scheduler,           // MENGIRIM PESAN SESUAI JADWAL
     messageInfoControl, // MENGIRIM MESSAGE INFO KE NOMOR 6282269599529 DAN CONSOLE LOG
     getCCDCCData,       // MENGAMBIL DATA PETUGAS PIKET CS DAN DCC
     sendFromDCC,        // KIRIM DARI DARI GRUP DCC
@@ -204,7 +223,9 @@ module.exports = {
     cekPiketCS,         // CEK PIKET CS
     cekPiketDCC,        // CEK PIKET DCC
     cekPiketCT,         // CEK PIKET CT
-    cekPiketYantek,     // CEK PIKET YANTEK
+    cekPiketYantekAll,  // CEK PIKET YANTEK SEMUA
+    cekPiketYantek,     // CEK PIKET YANTEK PER POSKO
     ping,               // PING
-    sendMessageToNumber // KIRIM PESAN KE NOMOR TERTENTU
+    sendMessageToNumber, // KIRIM PESAN KE NOMOR TERTENTU
+    testButtons
 }

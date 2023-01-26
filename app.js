@@ -1,7 +1,7 @@
 const qrcode = require('qrcode-terminal');
 const { Client, Location, List, Buttons, LocalAuth} = require('whatsapp-web.js');
-const {log, error} = require('./functions.js');
-const {jadwal, messageInfoControl, getCCDCCData, sendFromDCC, sendFromYandal, handleLocMessage, cekPiketCS, cekPiketDCC, cekPiketCT, cekPiketYantek, ping, sendMessageToNumber } = require('./controls.js');
+const {piket, log, error} = require('./functions.js');
+const {testButtons, scheduler, messageInfoControl, getCCDCCData, sendFromDCC, sendFromYandal, handleLocMessage, cekPiketCS, cekPiketDCC, cekPiketCT, cekPiketYantekAll, cekPiketYantek, ping, sendMessageToNumber } = require('./controls.js');
 const client = new Client({ authStrategy: new LocalAuth({ clientId: "bot1" }),puppeteer: { headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe'}});
 const client2 = new Client({ authStrategy: new LocalAuth({ clientId: "bot2" }),puppeteer: { headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe'}});
 let messageInfo = false;
@@ -16,6 +16,7 @@ client.on('ready', () => { log('BOT 1 READY');});
 client.on('change_state', state => { log('BOT 1 CHANGE STATE', state);});
 client.on('disconnected', (reason) => { log('BOT 1 Client was logged out', reason);});
 client.on('message', async msg => {
+    messageInfo = 
     messageInfoControl(msg,client,messageInfo); // MENGIRIM MESSAGE INFO KE NOMOR 6282269599529 DAN CONSOLE LOG
     getCCDCCData(msg);                          // MENGAMBIL DATA PETUGAS PIKET CS DAN DCC
     sendFromDCC(msg,client);                    // KIRIM DARI DARI GRUP DCC
@@ -24,7 +25,7 @@ client.on('message', async msg => {
     cekPiketCS(msg,client);                     // CEK PIKET CS
     cekPiketDCC(msg,client);                    // CEK PIKET DCC
     cekPiketCT(msg,client);                     // CEK PIKET CT
-    cekPiketYantek(msg,client);                 // CEK PIKET YANTEK
+    cekPiketYantekAll(msg,client);                 // CEK PIKET YANTEK
     ping(msg,client);                           // PING
     sendMessageToNumber(msg,client);            // KIRIM PESAN KE NOMOR TERTENTU
 });
@@ -39,15 +40,48 @@ client2.on('ready', () => { log('BOT 2 READY');});
 client2.on('change_state', state => { log('BOT 2 CHANGE STATE', state);});
 client2.on('disconnected', (reason) => { log('BOT 2 Client was logged out', reason);});
 client2.on('message', async msg => {
+    messageInfo = 
     messageInfoControl(msg,client2,messageInfo); // MENGIRIM MESSAGE INFO KE NOMOR 6282269599529 DAN CONSOLE LOG
     handleLocMessage(msg);                      // HANDLE PESAN LOC
     cekPiketCS(msg,client2);                     // CEK PIKET CS
     cekPiketDCC(msg,client2);                    // CEK PIKET DCC
     cekPiketCT(msg,client2);                     // CEK PIKET CT
-    cekPiketYantek(msg,client2);                 // CEK PIKET YANTEK
+    cekPiketYantekAll(msg,client2);                 // CEK PIKET YANTEK
     ping(msg,client2);                           // PING
     sendMessageToNumber(msg,client2);            // KIRIM PESAN KE NOMOR TERTENTU
 });
 
-jadwal(client2,8,0);    //JADWAL OTOMATIS KIRIM PESAN PAGI
-jadwal(client2,16,0);   //JADWAL OTOMATIS KIRIM PESAN SORE
+// JADWAL OTOMATIS CT DIKIRIM KE GRUP ULP
+[[8,0],[16,0]].forEach(([hour,minute]) => {
+    piket('piketCT').then(piketCT => {
+        scheduler(client2,"6281212747976-1458610958@g.us", `*PETUGAS PIKET CT*
+    
+*Petugas : ${piketCT.piketSekarang}*
+*Waktu   : ${piketCT.periode}*
+
+Petugas Selanjutnya : ${piketCT.piketSelanjutnya}
+Petugas Sebelum : ${piketCT.piketSebelum}`,
+        hour, minute);
+        })
+});
+
+// JADWAL OTOMATIS YANTEK DIKIRIM KE GRUP TJP
+// [[0,20],[0,21]].forEach(([hour,minute]) => {
+//     piket('piketYantek').then(piketYantek => {
+//         scheduler(client,"6282281162322-1572353572@g.us", `*PETUGAS PIKET YANTEK*
+    
+// Hari/Tanggal : ${piketYantek.tanggal}
+// Waktu : ${piketYantek.periode}
+// TJP1 : ${piketYantek.tjp1.piketSekarang}
+// TJP2 : ${piketYantek.tjp2.piketSekarang}
+// ​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
+//  *Petugas Selanjutnya*
+// TJP1 : ${piketYantek.tjp1.piketSelanjutnya}
+// TJP2 : ${piketYantek.tjp2.piketSelanjutnya}
+
+// *Petugas Sebelumnya*
+// TJP1 : ${piketYantek.tjp1.piketSebelumnya}
+// TJP2 : ${piketYantek.tjp2.piketSebelumnya}`,
+//         hour, minute);
+//         })
+// });
