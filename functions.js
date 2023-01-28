@@ -51,18 +51,23 @@ async function readExcelData() {
   return data;
 }
 
-async function piket(jenis, msg = '', waktu=''){
+async function piket(jenis, msg=null, hour=null, minute=null){
   let piketSebelum = null;
   let piketSekarang = null;
   let dataFromFile = null;
+  const now = new Date();
+
+  if(hour!=null){
+    now.setHours(hour);
+    now.setMinutes(minute);
+    now.setSeconds(0);
+  }
 
   if(jenis=="piketYantek"){
     const yantek = {};
-    const now = new Date();
     const waktu = moment();
     moment.locale('id');
     yantek.tanggal = waktu.format('dddd, DD MMM YYYY');
-
     const hour = now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Jakarta' }).split(":")[0];
     if (hour >= 8 && hour <= 15) { //SHIFT PAGI
       yantek.shift = "PAGI";
@@ -84,14 +89,14 @@ async function piket(jenis, msg = '', waktu=''){
         kantor="binga"
       }
       
-      if(!yantek[kantor]){ yantek[kantor] = {}         }
+      if(!yantek[kantor]){ yantek[kantor] = {}}
 
       worksheet.eachRow((row,  rowNumber) => {
         const date = row.getCell(1).value;
         const waktu = row.getCell(2).value;
         if (date == now.toLocaleDateString(undefined, { timeZone: 'Asia/Jakarta' }) && yantek.shift.substring(0,1)==waktu)
         {
-          yantek[kantor].piketSebelum = worksheet.getRow(rowNumber-1).getCell(4).value;
+          yantek[kantor].piketSebelumnya = worksheet.getRow(rowNumber-1).getCell(4).value;
           yantek[kantor].piketSekarang = row.getCell(4).value;
           yantek[kantor].piketSelanjutnya = worksheet.getRow(rowNumber+1).getCell(4).value;
         }
@@ -107,8 +112,6 @@ async function piket(jenis, msg = '', waktu=''){
     // const now = new Date("2023-01-18T01:23:24.273Z");
     // console.log(now)
     // console.log(now.toLocaleString('en-GB', { timeZone: 'Asia/Jakarta' }))
-
-    const now = new Date();
     // if(waktu=='PAGI'){
     //   now.setUTCHours(1)
     // } else if(waktu=='SIANG'){
@@ -163,7 +166,7 @@ async function piket(jenis, msg = '', waktu=''){
     console.error(err);
   }
  
-  if (msg==''){
+  if (msg==null){
     piketSebelum = dataFromFile[jenis].piketSebelum;
     piketSekarang = dataFromFile[jenis].piketSekarang;
     return {
