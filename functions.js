@@ -56,7 +56,7 @@ async function piket(jenis, msg=null, hour=null, minute=null){
   let piketSekarang = null;
   let dataFromFile = null;
   const now = new Date();
-
+  
   if(hour!=null){
     now.setHours(hour);
     now.setMinutes(minute);
