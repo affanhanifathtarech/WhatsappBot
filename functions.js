@@ -1,6 +1,7 @@
 const fs = require("fs");
 const stringSimilarity = require('string-similarity');
 const Excel = require('exceljs');
+const axios = require('axios');
 const moment = require('moment');
 require('moment/locale/id');
 
@@ -163,7 +164,7 @@ async function piket(jenis, msg=null, hour=null, minute=null){
     const data = fs.readFileSync('./DATA/data.json');
     dataFromFile = JSON.parse(data);
   } catch (err) {
-    console.error(err);
+    log(err);
   }
  
   if (msg==null){
@@ -192,7 +193,7 @@ async function piket(jenis, msg=null, hour=null, minute=null){
     dataFromFile[jenis].piketSekarang = piketSekarang;
     fs.writeFileSync('./DATA/data.json', JSON.stringify(dataFromFile));
   } catch (err) {
-    console.error(err);
+    log(err);
   }
 
   return {
@@ -213,16 +214,47 @@ function log(var1,var2='',var3=''){
   console.log(`${year}/${month}/${date} ${hours}:${minutes}:${seconds}`, var1, var2, var3)
 }
 
-function error(var1,var2='',var3=''){
-  const now = new Date();
-  const date = (`0${now.getDate()}`).slice(-2);
-  const month = (`0${now.getMonth() + 1}`).slice(-2);
-  const year = (`0${(now.getYear()-100)}`).slice(-2);
-  const hours = (`0${now.getHours()}`).slice(-2);;
-  const minutes = (`0${now.getMinutes()}`).slice(-2);
-  const seconds = (`0${now.getSeconds()}`).slice(-2);
+async function getPrepaidData(customer) {
   
-  console.error(`${year}/${month}/${date} ${hours}:${minutes}:${seconds}`, var1, var2, var3)
+  try {
+    const response = await axios.post('https://m.bukalapak.com/westeros_auth_proxies', {application_id: 1,authenticity_token: ''});
+    const token = response.data.access_token;
+
+    try {
+      const response = await axios.post('https://api.bukalapak.com/electricities/prepaid-inquiries?access_token=' + token,{customer_number : customer, product_id : 0});
+      return response.data.data;
+
+    } catch (error) {
+      log("prepaid error get inqueries: ",error.data);
+      return false;
+    }
+
+  } catch (error) {
+    log("prepaid error get auth: ",error.data);
+    return false;
+  }
+
 }
 
-module.exports = { isCoordinate, isSwitching, formatString, search, readExcelData, piket, log, error }
+async function getPostpaidData(customer) {
+  try {
+    const response = await axios.post('https://m.bukalapak.com/westeros_auth_proxies', {application_id: 1,authenticity_token: ''});
+    const token = response.data.access_token;
+
+    try {
+      const response = await axios.post('https://api.bukalapak.com/electricities/postpaid-inquiries?access_token=' + token,{customer_number : customer});
+      return response.data.data;
+
+    } catch (error) {
+      log("postpaid error get inqueries: ",error.data);
+      return false;
+    }
+    
+  } catch (error) {
+    log("postpaid error get auth: ",error.data);
+    return false;
+  }
+
+}
+
+module.exports = { isCoordinate, isSwitching, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData }

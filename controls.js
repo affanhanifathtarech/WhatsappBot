@@ -1,5 +1,5 @@
 const schedule = require('node-schedule');
-const { isCoordinate, formatString, search, readExcelData, piket, log } = require('./functions.js');
+const { isCoordinate, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData } = require('./functions.js');
 
 function scheduler(client, client2){
     // JADWAL OTOMATIS CT DIKIRIM KE GRUP ULP
@@ -222,6 +222,27 @@ function handleLocMessage(msg){
   }
 }
 
+async function handleKWHMessage(msg,client){
+  // HANDLE PESAN KWH
+  if (msg.body.toLowerCase().startsWith('kwh ')) {
+
+        const customer = msg.body.toLowerCase().replace(/^(kwh) /, '');
+        let data = await getPrepaidData(customer);
+        if (!data) data = await getPostpaidData(customer);
+        if (!data) {
+            client.sendMessage(msg.from, "Maaf, silakan gunakan PLN Mobile.");
+        } else {
+            client.sendMessage(msg.from, `*DATA PELANGGAN*
+        
+ID Pelanggan : ${data.customer_number}${data.meter_number ? `\nNomor Meter : ${data.meter_number}` : ''}
+Nama : ${data.customer_name}
+Tarif : ${data.segmentation}
+Daya : ${data.power}
+Jenis : ${data.meter_number ? 'prabayar' : 'pascabayar'}${data.stand_meter ? `\n\nStan : ${data.stand_meter}` : ''}${data.amount ? `\nTagihan : Rp${(data.amount-2500)}` : ''}${data.unpaid_bill ? `\nPeriode : ${data.unpaid_bill}` : ''}`);
+        }
+  }
+}
+
 function cekPiketDCC(msg,client){
   // CEK PETUGAS PIKET
   if (msg.body.toLowerCase() === 'cek piket dcc') {
@@ -333,6 +354,7 @@ module.exports = {
     sendFromDCC,        // KIRIM DARI DARI GRUP DCC
     sendFromYandal,     // KIRIM DARI DARI GRUP YANDAL
     handleLocMessage,   // HANDLE PESAN LOC
+    handleKWHMessage,   // HANDLE PESAN KWH
     cekPiketCS,         // CEK PIKET CS
     cekPiketDCC,        // CEK PIKET DCC
     cekPiketCT,         // CEK PIKET CT
