@@ -1,5 +1,5 @@
 const schedule = require('node-schedule');
-const { isCoordinate, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData, getACMTData, isNumber } = require('./functions.js');
+const { isCoordinate, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData, getACMTData, isNumber, getInquiryData } = require('./functions.js');
 
 function scheduler(client, client2) {
     // JADWAL OTOMATIS CT DIKIRIM KE GRUP ULP
@@ -222,11 +222,11 @@ function handleLocMessage(msg) {
     }
 }
 
-async function handleKWHMessage(msg, client) {
+async function handleKWHMessage(msg, client, MessageMedia) {
     // HANDLE PESAN KWH
     if (msg.body.toLowerCase().startsWith('kwh ')) {
 
-        const customer = msg.body.toLowerCase().replace(/^(kwh) /, '');
+        const customer = msg.body.toLowerCase().replace(/^(kwh) /, '').trim();
         if (!isNumber(customer)) return;
         let timeout = setTimeout(() => {
             client.sendMessage(msg.from, "Mohon menunggu...");
@@ -242,37 +242,51 @@ async function handleKWHMessage(msg, client) {
         // } catch (error) {
         //     console.error(error);
         // }
+        // Promise.any([getPostpaidData(customer), getPrepaidData(customer)])
+        // Jenis : ${data.meter_number ? 'Prabayar' : 'Pascabayar'}${data.stand_meter ? `\n\nStan : ${data.stand_meter}` : ''}${data.amount ? `\nTagihan : Rp${(data.amount - 2500)}` : ''}${data.unpaid_bill ? `\nPeriode : ${data.unpaid_bill}` : ''}
 
-        Promise.any([getPostpaidData(customer), getPrepaidData(customer)])
-            .then(async (data) => {
-                const ACMTData = await getACMTData(data.customer_number);
+        await getInquiryData(customer)
+            .then(async (inquiryData) => {
+                const ACMTData = await getACMTData((inquiryData.meter_number == "") ? customer : inquiryData.customer_number);
                 return {
-                    data,
+                    inquiryData,
                     ACMTData
                 }
             })
-            .then(({ data, ACMTData }) => {
+            .then(async ({ inquiryData, ACMTData }) => {
                 clearTimeout(timeout);
-                console.log(data);
-                console.log(ACMTData);
                 client.sendMessage(msg.from, `*DATA PELANGGAN*
 
-ID Pelanggan : ${data.customer_number}${data.meter_number ? `\nNomor Meter : ${data.meter_number}` : ''}
-Nama : ${data.customer_name}
-Tarif : ${data.segmentation}
-Daya : ${data.power}
-Jenis : ${data.meter_number ? 'Prabayar' : 'Pascabayar'}${data.stand_meter ? `\n\nStan : ${data.stand_meter}` : ''}${data.amount ? `\nTagihan : Rp${(data.amount - 2500)}` : ''}${data.unpaid_bill ? `\nPeriode : ${data.unpaid_bill}` : ''}
-
+ID Pelanggan : ${(inquiryData.customer_number) != '' ? inquiryData.customer_number : ACMTData.idpel}
+Nomor Meter : ${(inquiryData.meter_number) != '' ? inquiryData.meter_number : ACMTData.nomor_meter}
+Nama : ${(inquiryData.customer_name) != '' ? inquiryData.customer_name : ACMTData.nama}
+Tarif : ${(inquiryData.segmentation) != '' ? inquiryData.segmentation : ACMTData.tarif}
+Daya : ${!isNaN(inquiryData.power) ? inquiryData.power : ACMTData.daya}
 Gardu : ${ACMTData.gardu}
 Tiang : ${ACMTData.tiang}
-Lokasi : https://maps.google.com/maps?q=${ACMTData.latitude}8%2C${ACMTData.longitude}&z=17&hl=en
+Merk Meter : ${ACMTData.merk_meter}
 
-`);
+Lokasi : 
+https://maps.google.com/maps?q=${ACMTData.latitude}8%2C${ACMTData.longitude}&z=17&hl=en`);
 
-
+                // const url1 = `https://portalapp.iconpln.co.id/acmt/DisplayBlobServlet7?idpel=${ACMTData.idpel}`;
+                // const statusFoto1 = await isAccessableImage(url1);
+                // log(statusFoto1.message);
+                // try {
+                //     const foto1 = await MessageMedia.fromUrl(``, { unsafeMime: true });
+                //     const foto2 = await MessageMedia.fromUrl(`https://portalapp.iconpln.co.id/acmt/DisplayBlobServlet1?idpel=${ACMTData.idpel}&blth=${ACMTData.blth}`, { unsafeMime: true });
+                //     foto1.mimetype = "image/png";
+                //     foto2.mimetype = "image/png";
+                //     client.sendMessage(msg.from, foto1);
+                //     client.sendMessage(msg.from, foto2);
+                // } catch (err) {
+                //     log(err);
+                // }
             }).catch(() => {
-                client.sendMessage(msg.from, "Maaf, silakan gunakan PLN Mobile.");
+                clearTimeout(timeout);
+                client.sendMessage(msg.from, "Maaf, sistem gangguan. Silakan gunakan PLN Mobile.");
             });
+
 
     }
 }

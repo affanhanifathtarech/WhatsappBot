@@ -1,5 +1,5 @@
 const qrcode = require('qrcode-terminal');
-const { Client, Location, List, Buttons, LocalAuth } = require('whatsapp-web.js');
+const { MessageMedia, Client, Location, List, Buttons, LocalAuth } = require('whatsapp-web.js');
 const { log } = require('./functions.js');
 const { testButtons, scheduler, messageInfoControl, getCCDCCData, sendFromDCC, sendFromYandal, handleLocMessage, handleKWHMessage, handlePiketCS, handlePiketDCC, handlePiketCT, handlePiketYantekAll, handlePiketYantek, ping, sendMessageToNumber } = require('./controls.js');
 const client = new Client({ authStrategy: new LocalAuth({ clientId: "bot1" }), puppeteer: { headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' } });
@@ -21,7 +21,7 @@ client.on('message', async msg => {
     sendFromDCC(msg, client);                    // KIRIM DARI DARI GRUP DCC
     sendFromYandal(msg, client);                 // KIRIM DARI DARI GRUP YANDAL
     handleLocMessage(msg);                       // HANDLE PESAN LOC
-    handleKWHMessage(msg, client);               // HANDLE PESAN LOC
+    handleKWHMessage(msg, client, MessageMedia);               // HANDLE PESAN LOC
     handlePiketCS(msg, client);                  // HANDLE PIKET CS
     handlePiketDCC(msg, client);                 // HANDLE PIKET DCC
     handlePiketCT(msg, client);                  // HANDLE PIKET CT

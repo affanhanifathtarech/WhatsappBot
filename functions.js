@@ -262,6 +262,33 @@ async function getPostpaidData(customer) {
 
 }
 
+async function getInquiryData(customer) {
+  try {
+    const response = await axios.post('https://api.digiflazz.com/v1/transaction', {
+      "commands": "pln-subscribe",
+      "customer_no": customer
+    });
+
+    const data = response.data.data;
+    const segmentPower = data.segment_power;
+    const segmentation = segmentPower.split('/')[0].trim();
+    const power = parseInt(segmentPower.split('/')[1]);
+
+    return Promise.resolve({
+      "customer_number": data.subscriber_id,
+      "meter_number": data.meter_no,
+      "customer_name": data.name,
+      "segmentation": segmentation,
+      "power": power
+    });
+
+  } catch (error) {
+    log(`error get inquiry : `, error);
+    return Promise.reject(false);
+  }
+
+}
+
 async function getACMTData(customer) {
   let keyArray = [
     "hist_foto",
@@ -354,4 +381,4 @@ async function getACMTData(customer) {
   }
 }
 
-module.exports = { isNumber, isCoordinate, isSwitching, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData, getACMTData }
+module.exports = { getInquiryData, isNumber, isCoordinate, isSwitching, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData, getACMTData }
