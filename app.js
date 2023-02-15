@@ -21,13 +21,14 @@ client.on('message', async msg => {
     sendFromDCC(msg, client);                    // KIRIM DARI DARI GRUP DCC
     sendFromYandal(msg, client);                 // KIRIM DARI DARI GRUP YANDAL
     handleLocMessage(msg);                       // HANDLE PESAN LOC
-    handleKWHMessage(msg, client, MessageMedia);               // HANDLE PESAN LOC
+    handleKWHMessage(msg, client, MessageMedia); // HANDLE PESAN LOC
     handlePiketCS(msg, client);                  // HANDLE PIKET CS
     handlePiketDCC(msg, client);                 // HANDLE PIKET DCC
     handlePiketCT(msg, client);                  // HANDLE PIKET CT
     handlePiketYantekAll(msg, client);           // HANDLE PIKET YANTEK
     ping(msg, client);                           // PING
     sendMessageToNumber(msg, client);            // KIRIM PESAN KE NOMOR TERTENTU
+    testButtons(msg, client, Buttons);
 });
 
 // BOT HP TEKNIK
@@ -40,15 +41,15 @@ client2.on('ready', () => { log('BOT 2 READY'); client2.isReady = true; checkIfA
 client2.on('change_state', state => { log('BOT 2 CHANGE STATE', state); });
 client2.on('disconnected', (reason) => { log('BOT 2 Client was logged out', reason); });
 client2.on('message', async msg => {
-    messageInfoControl(msg, client2);             // MENGIRIM MESSAGE INFO KE NOMOR 6282269599529 DAN CONSOLE LOG
-    handleLocMessage(msg);                        // HANDLE PESAN LOC
-    handleKWHMessage(msg, client2);               // HANDLE PESAN LOC
-    handlePiketCS(msg, client2);                   // HANDLE PIKET CS
-    handlePiketDCC(msg, client2);                  // HANDLE PIKET DCC
-    handlePiketCT(msg, client2);                   // HANDLE PIKET CT
-    handlePiketYantekAll(msg, client2);            // HANDLE PIKET YANTEK
-    ping(msg, client2);                           // PING
-    sendMessageToNumber(msg, client2);            // KIRIM PESAN KE NOMOR TERTENTU
+    messageInfoControl(msg, client2);               // MENGIRIM MESSAGE INFO KE NOMOR 6282269599529 DAN CONSOLE LOG
+    handleLocMessage(msg);                          // HANDLE PESAN LOC
+    handleKWHMessage(msg, client2, MessageMedia);   // HANDLE PESAN LOC
+    handlePiketCS(msg, client2);                    // HANDLE PIKET CS
+    handlePiketDCC(msg, client2);                   // HANDLE PIKET DCC
+    handlePiketCT(msg, client2);                    // HANDLE PIKET CT
+    handlePiketYantekAll(msg, client2);             // HANDLE PIKET YANTEK
+    ping(msg, client2);                             // PING
+    sendMessageToNumber(msg, client2);              // KIRIM PESAN KE NOMOR TERTENTU
 });
 
 //MULAI SAAT BOT TELAH SIAP

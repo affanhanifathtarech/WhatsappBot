@@ -97,6 +97,3 @@ axios({
   .catch(error => {
     console.log(error);
   });
-
-  // https://portalapp.iconpln.co.id/acmt/DisplayBlobServlet7?idpel=163000401386
-  // image url

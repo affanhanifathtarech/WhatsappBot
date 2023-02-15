@@ -232,59 +232,59 @@ async function handleKWHMessage(msg, client, MessageMedia) {
             client.sendMessage(msg.from, "Mohon menunggu...");
         }, 3000);
 
-        // try {
-        //     let [result1, result2] = await Promise.allSettled([
-        //         Promise.any([getPostpaidData(customer), getPrepaidData(customer)]),
-        //         getACMTData(customer)
-        //     ]);
-
-        //     console.log(result1, result2);
-        // } catch (error) {
-        //     console.error(error);
-        // }
-        // Promise.any([getPostpaidData(customer), getPrepaidData(customer)])
-        // Jenis : ${data.meter_number ? 'Prabayar' : 'Pascabayar'}${data.stand_meter ? `\n\nStan : ${data.stand_meter}` : ''}${data.amount ? `\nTagihan : Rp${(data.amount - 2500)}` : ''}${data.unpaid_bill ? `\nPeriode : ${data.unpaid_bill}` : ''}
-
         await getInquiryData(customer)
             .then(async (inquiryData) => {
-                const ACMTData = await getACMTData((inquiryData.meter_number == "") ? customer : inquiryData.customer_number);
+                const ACMTData = await getACMTData((inquiryData.meter_number === '') ? customer : inquiryData.customer_number);
+                if (inquiryData.customer_number === '' && ACMTData.idpel === undefined) {
+                    const error = new Error('Maaf, data tidak ditemukan');
+                    error.statusCode = 404;
+                    throw error;
+                }
                 return {
                     inquiryData,
                     ACMTData
                 }
             })
             .then(async ({ inquiryData, ACMTData }) => {
-                clearTimeout(timeout);
-                client.sendMessage(msg.from, `*DATA PELANGGAN*
+                await MessageMedia.fromUrl(
+                    `https://portalapp.iconpln.co.id/acmt/DisplayBlobServlet7?idpel=${ACMTData.idpel}`,
+                    { unsafeMime: true })
+                    .then(async (result) => {
+                        if (result.data !== '') return result;
 
+                        let res = {};
+                        for (let i = 1; i < 4; i++) {
+                            res = await MessageMedia.fromUrl(
+                                `https://portalapp.iconpln.co.id/acmt/DisplayBlobServlet${i}?idpel=${ACMTData.idpel}&blth=${ACMTData.blth}`,
+                                { unsafeMime: true });
+                            if (res.data !== '') break;
+                        }
+                        return res;
+                    })
+                    .then((media) => {
+                        const theMessage = `*DATA PELANGGAN*
+                        
 ID Pelanggan : ${(inquiryData.customer_number) != '' ? inquiryData.customer_number : ACMTData.idpel}
 Nomor Meter : ${(inquiryData.meter_number) != '' ? inquiryData.meter_number : ACMTData.nomor_meter}
 Nama : ${(inquiryData.customer_name) != '' ? inquiryData.customer_name : ACMTData.nama}
 Tarif : ${(inquiryData.segmentation) != '' ? inquiryData.segmentation : ACMTData.tarif}
-Daya : ${!isNaN(inquiryData.power) ? inquiryData.power : ACMTData.daya}
-Gardu : ${ACMTData.gardu}
-Tiang : ${ACMTData.tiang}
-Merk Meter : ${ACMTData.merk_meter}
+Daya : ${!isNaN(inquiryData.power) ? inquiryData.power : ACMTData.daya}${(ACMTData.gardu === '' || ACMTData.gardu === undefined) ? '' : `\nGardu : ${ACMTData.gardu}`}${(ACMTData.tiang === '' || ACMTData.tiang === undefined) ? '' : `\nTiang : ${ACMTData.tiang}`}${(ACMTData.merk_meter === '' || ACMTData.merk_meter === undefined) ? '' : `\nMerk : ${ACMTData.merk_meter}`}${(ACMTData.latitude === '' || ACMTData.longitude === '' || ACMTData.latitude === undefined || ACMTData.longitude === undefined) ? '' : `\n\nLokasi : \nhttps://maps.google.com/maps?q=${ACMTData.latitude}8%2C${ACMTData.longitude}`}`;
 
-Lokasi : 
-https://maps.google.com/maps?q=${ACMTData.latitude}8%2C${ACMTData.longitude}&z=17&hl=en`);
-
-                // const url1 = `https://portalapp.iconpln.co.id/acmt/DisplayBlobServlet7?idpel=${ACMTData.idpel}`;
-                // const statusFoto1 = await isAccessableImage(url1);
-                // log(statusFoto1.message);
-                // try {
-                //     const foto1 = await MessageMedia.fromUrl(``, { unsafeMime: true });
-                //     const foto2 = await MessageMedia.fromUrl(`https://portalapp.iconpln.co.id/acmt/DisplayBlobServlet1?idpel=${ACMTData.idpel}&blth=${ACMTData.blth}`, { unsafeMime: true });
-                //     foto1.mimetype = "image/png";
-                //     foto2.mimetype = "image/png";
-                //     client.sendMessage(msg.from, foto1);
-                //     client.sendMessage(msg.from, foto2);
-                // } catch (err) {
-                //     log(err);
-                // }
-            }).catch(() => {
+                        media.mimetype = "image/jpg";
+                        media.filename = `KWH ${ACMTData.idpel} - ${ACMTData.blth}`;
+                        clearTimeout(timeout);
+                        if (media.data !== '') {
+                            client.sendMessage(msg.from, media, { caption: theMessage });
+                        } else {
+                            client.sendMessage(msg.from, theMessage);
+                        }
+                    })
+                    .catch((err) => {
+                        log(err);
+                    });
+            }).catch((error) => {
                 clearTimeout(timeout);
-                client.sendMessage(msg.from, "Maaf, sistem gangguan. Silakan gunakan PLN Mobile.");
+                client.sendMessage(msg.from, error.message);
             });
 
 
@@ -391,7 +391,7 @@ async function sendMessageToNumber(msg, client) {
 
 function testButtons(msg, client, Buttons) {
     if (msg.body.toLowerCase().startsWith('button')) {
-        const button = new Buttons('Button body', [{ body: 'Some text' }, { body: 'Try clicking me (id:test)', id: 'test' },], 'title', 'footer');
+        const button = new Buttons('Button body', [{ body: 'Some text' }, { body: '.', id: 'test' },], 'title', 'footer');
         client.sendMessage(msg.from, button);
     }
 }
