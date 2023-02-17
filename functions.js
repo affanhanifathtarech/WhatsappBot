@@ -2,6 +2,7 @@ const fs = require("fs");
 const stringSimilarity = require('string-similarity');
 const Excel = require('exceljs');
 const axios = require('axios');
+const https = require('https');
 const moment = require('moment');
 require('moment/locale/id');
 moment.locale('id');
@@ -349,6 +350,20 @@ async function getACMTData(customer) {
     "alamat_peta"
   ]
 
+  let keyArraytoShow = [
+    "merk_meter",
+    "nomor_meter",
+    "unitupi",
+    "blth",
+    "gardu",
+    "tarif",
+    "tiang",
+    "idpel",
+    "nama",
+    "daya",
+    "unitup"
+  ]
+
   try {
     const response = await axios({
       method: "post",
@@ -359,19 +374,47 @@ async function getACMTData(customer) {
       data: `7|0|15|https://portalapp.iconpln.co.id/acmt/main/|75A889AF7A9517F8CD5B330A92874A24|id.co.iconpln.client.app.service.IpamService|getUtilDao|java.lang.String/2004016611|java.util.Map||com.extjs.gxt.ui.client.core.FastMap/3488076414|code|idpel|${customer}|unitup|16300|func_name|FG_INFOPELANGGAN|1|2|3|4|2|5|6|7|8|4|5|9|5|7|5|10|5|11|5|12|5|13|5|14|5|15|`
     });
 
+    const agent = new https.Agent({ rejectUnauthorized: false });
+    const response2 = await axios.get(`https://portalapp.iconpln.co.id:3666/acmt_plg/index.php/stock/stock_batubara/dataInfo?idpel=${customer}`,
+      { httpsAgent: agent });
+
     const data = response.data;
     const arrayData = JSON.parse(data.replace("//OK", ""));
     const arr = arrayData[arrayData.length - 3];
 
     let obj = {};
+    // let urls = [];
+    let blthFromUrls = [];
+    const urlRegex = /^(?:\w+:)?\/\/([^\s.]+\.\S{2}|localhost[\:?\d]*)\S*$/;
+
     for (let i = 0; i < arr.length; i++) {
       if (keyArray.some((arg) => { return arr[i] == arg })) {
-        if (keyArray.some((arg) => { return arr[i + 1] == arg })) {
-          obj[arr[i]] = "";
-        } else {
-          obj[arr[i]] = arr[i + 1];
+        if (keyArraytoShow.find((j) => { return j === arr[i] })) {
+          if (keyArray.some((arg) => { return arr[i + 1] == arg })) {
+            obj[arr[i]] = "";
+          } else {
+            obj[arr[i]] = arr[i + 1];
+          }
         }
       }
+
+      if (urlRegex.test(arr[i])) {
+        // urls.push(arr[i]);
+        if (arr[i].startsWith('http://portalapp.iconpln.co.id:8001/image/index.jsp?u_r_l=http://portalapp.iconpln.co.id:8000/ipams/images/')) {
+          const thisBlth = arr[i].replace('http://portalapp.iconpln.co.id:8001/image/index.jsp?u_r_l=http://portalapp.iconpln.co.id:8000/ipams/images/', '').split("/")[1];
+          blthFromUrls.push(thisBlth);
+        }
+      }
+
+    }
+
+    // obj.urls = urls;
+    obj.blthFromUrls = blthFromUrls;
+    const res2_length = response2.data.content.length;
+    if (res2_length !== 0) {
+      obj.maps_blth = response2.data.content[res2_length - 1].BLTH;
+      obj.longitude = response2.data.content[res2_length - 1].LONGITUDE;
+      obj.latitude = response2.data.content[res2_length - 1].LATITUDE;
     }
 
     return Promise.resolve(obj);

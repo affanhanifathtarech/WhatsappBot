@@ -6,6 +6,8 @@ const client = new Client({ authStrategy: new LocalAuth({ clientId: "bot1" }), p
 const client2 = new Client({ authStrategy: new LocalAuth({ clientId: "bot2" }), puppeteer: { headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' } });
 global.messageInfo = false;
 
+//AIzaSyDnv4mGySmUS-dAX_-GqU3wka0wfttzJg4
+
 // BOT HP UTAMA
 client.initialize();
 client.on('loading_screen', (percent, message) => { log('BOT 1 LOADING SCREEN', percent, message); });

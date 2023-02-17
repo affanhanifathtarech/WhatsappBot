@@ -1,5 +1,6 @@
 const schedule = require('node-schedule');
 const { isCoordinate, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData, getACMTData, isNumber, getInquiryData } = require('./functions.js');
+const sharp = require('sharp');
 
 function scheduler(client, client2) {
     // JADWAL OTOMATIS CT DIKIRIM KE GRUP ULP
@@ -252,11 +253,14 @@ async function handleKWHMessage(msg, client, MessageMedia) {
                     .then(async (result) => {
                         if (result.data !== '') return result;
 
-                        let res = {};
+                        let res = { 'data': '' };
                         for (let i = 1; i < 4; i++) {
-                            res = await MessageMedia.fromUrl(
-                                `https://portalapp.iconpln.co.id/acmt/DisplayBlobServlet${i}?idpel=${ACMTData.idpel}&blth=${ACMTData.blth}`,
-                                { unsafeMime: true });
+                            for (let j = 0; j < ACMTData.blthFromUrls.length; j++) {
+                                res = await MessageMedia.fromUrl(
+                                    `https://portalapp.iconpln.co.id/acmt/DisplayBlobServlet${i}?idpel=${ACMTData.idpel}&blth=${ACMTData.blthFromUrls[j]}`,
+                                    { unsafeMime: true });
+                                if (res.data !== '') break;
+                            }
                             if (res.data !== '') break;
                         }
                         return res;
@@ -269,6 +273,21 @@ Nomor Meter : ${(inquiryData.meter_number) != '' ? inquiryData.meter_number : AC
 Nama : ${(inquiryData.customer_name) != '' ? inquiryData.customer_name : ACMTData.nama}
 Tarif : ${(inquiryData.segmentation) != '' ? inquiryData.segmentation : ACMTData.tarif}
 Daya : ${!isNaN(inquiryData.power) ? inquiryData.power : ACMTData.daya}${(ACMTData.gardu === '' || ACMTData.gardu === undefined) ? '' : `\nGardu : ${ACMTData.gardu}`}${(ACMTData.tiang === '' || ACMTData.tiang === undefined) ? '' : `\nTiang : ${ACMTData.tiang}`}${(ACMTData.merk_meter === '' || ACMTData.merk_meter === undefined) ? '' : `\nMerk : ${ACMTData.merk_meter}`}${(ACMTData.latitude === '' || ACMTData.longitude === '' || ACMTData.latitude === undefined || ACMTData.longitude === undefined) ? '' : `\n\nLokasi : \nhttps://maps.google.com/maps?q=${ACMTData.latitude}8%2C${ACMTData.longitude}`}`;
+
+                        // // asumsi 'blob' berisi data gambar blob yang ingin dipertajam
+                        // const image = sharp(Buffer.from(media.data, 'base64'));
+
+                        // // pertajam gambar
+                        // image.sharpen();
+
+                        // // konversi gambar menjadi base64
+                        // image.toBuffer((err, data, info) => {
+                        //     if (err) {
+                        //         log(err);
+                        //     } else {
+                        //         media.data = data.toString('base64');
+                        //     }
+                        // });
 
                         media.mimetype = "image/jpg";
                         media.filename = `KWH ${ACMTData.idpel} - ${ACMTData.blth}`;
@@ -286,8 +305,6 @@ Daya : ${!isNaN(inquiryData.power) ? inquiryData.power : ACMTData.daya}${(ACMTDa
                 clearTimeout(timeout);
                 client.sendMessage(msg.from, error.message);
             });
-
-
     }
 }
 
