@@ -3,6 +3,8 @@ const stringSimilarity = require('string-similarity');
 const Excel = require('exceljs');
 const axios = require('axios');
 const https = require('https');
+const { google } = require('googleapis');
+const keys = require('./credentials.json'); // Ganti dengan nama file kredensial Anda
 const moment = require('moment');
 require('moment/locale/id');
 moment.locale('id');
@@ -21,6 +23,17 @@ function isSwitching(str) {
 
 function formatString(str) {
   return str.replace(/\d+/g, (n) => n.padStart(4, '0'));
+}
+
+function convertString(arr) {
+  if (arr.length === 1) {
+    return arr[0];
+  } else if (arr.length === 2) {
+    return arr.join(' & ');
+  } else {
+    const lastElement = arr.pop();
+    return `${arr.join(', ')}, & ${lastElement}`;
+  }
 }
 
 function search(obj, data, msg) {
@@ -115,15 +128,6 @@ async function piket(jenis, msg = null, hour = null, minute = null) {
     let periode = null;
     let piketSelanjutnya = null;
     const waktu = formattedDate;
-    // const waktu = `${nowDay}, ${nowDate}`;
-    // const now = new Date("2023-01-18T01:23:24.273Z");
-    // console.log(now)
-    // console.log(now.toLocaleString('en-GB', { timeZone: 'Asia/Jakarta' }))
-    // if(waktu=='PAGI'){
-    //   now.setUTCHours(1)
-    // } else if(waktu=='SIANG'){
-    //   now.setUTCHours(9)
-    // }
     const workbook = new Excel.Workbook();
     await workbook.xlsx.readFile('./DATA/JADWAL PIKET CT.xlsx');
 
@@ -424,4 +428,121 @@ async function getACMTData(customer) {
   }
 }
 
-module.exports = { getInquiryData, isNumber, isCoordinate, isSwitching, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData, getACMTData }
+async function searchGardu(searchValue) {
+  const spreadsheetId = '1LULf4cuYDWLAhVKzI5xC0YhfQdRDv-0Co_b2E-IhLmI';
+  const rangeWBP = 'PENGUKURAN BEBAN WBP!B:CE';
+  const rangeLWBP = 'PENGUKURAN BEBAN LWBP!B:CE';
+  const client = new google.auth.JWT(keys.client_email, null, keys.private_key, ['https://www.googleapis.com/auth/spreadsheets']);
+
+  try {
+    await client.authorize();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+    const responseWBP = await sheets.spreadsheets.values.get({ spreadsheetId: spreadsheetId, range: rangeWBP });
+    const responseLWBP = await sheets.spreadsheets.values.get({ spreadsheetId: spreadsheetId, range: rangeLWBP });
+    const rowsWBP = responseWBP.data.values;
+    const rowsLWBP = responseLWBP.data.values;
+    let rowData = {};
+    rowData.wbp = {};
+    rowData.lwbp = {};
+    rowsWBP.forEach(row => {
+      if (row[0] == searchValue) {
+        rowData.namaGardu = row[0];
+        rowData.alamat = row[1];
+        rowData.penyulang = row[2];
+        rowData.section = row[3];
+        rowData.tipe = row[8];
+        rowData.merk = row[9];
+        rowData.daya = row[10];
+        rowData.tahun = row[12];
+        rowData.jurTerpasang = row[17];
+        rowData.jurTerpakai = row[18];
+        rowData.tap = row[19];
+        rowData.wbp.tglUkur = row[15];
+        rowData.wbp.jamUkur = row[14];
+        rowData.wbp.status = [row[79], row[81]];
+        rowData.wbp.beban = [row[67], row[68], row[69]];
+        rowData.wbp.arusUtama = [row[21], row[22], row[23], row[24]];
+        rowData.wbp.arus1 = [row[25], row[26], row[27], row[28]];
+        rowData.wbp.arus2 = [row[29], row[30], row[31], row[32]];
+        rowData.wbp.arus3 = [row[33], row[34], row[35], row[36]];
+        rowData.wbp.arus4 = [row[37], row[38], row[39], row[40]];
+        rowData.wbp.tegangan = [row[41], row[42], row[43], row[44], row[45], row[46]];
+      }
+    });
+    rowsLWBP.forEach(row => {
+      if (row[0] == searchValue) {
+        rowData.lwbp.tglUkur = row[15];
+        rowData.lwbp.jamUkur = row[14];
+        rowData.lwbp.status = [row[79], row[81]];
+        rowData.lwbp.beban = [row[67], row[68], row[69]];
+        rowData.lwbp.arusUtama = [row[21], row[22], row[23], row[24]];
+        rowData.lwbp.arus1 = [row[25], row[26], row[27], row[28]];
+        rowData.lwbp.arus2 = [row[29], row[30], row[31], row[32]];
+        rowData.lwbp.arus3 = [row[33], row[34], row[35], row[36]];
+        rowData.lwbp.arus4 = [row[37], row[38], row[39], row[40]];
+        rowData.lwbp.tegangan = [row[41], row[42], row[43], row[44], row[45], row[46]];
+      }
+    });
+    if (rowData === {}) throw new Error("Data tidak ditemukan")
+    return rowData;
+  } catch (error) {
+    log("Error get gardu data : ", error);
+    return Promise.resolve(false);
+  }
+}
+
+async function searchPiket(jenisPiket = 'keandalan') {
+  try {
+    const spreadsheetId = '1a6snBRjGbSejrGlWvFuDvAtcA68tye9eTOx9RFJzDPY';
+    const client = new google.auth.JWT(keys.client_email, null, keys.private_key, ['https://www.googleapis.com/auth/spreadsheets']);
+    await client.authorize();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+
+    const now = new Date();
+    const bulan = now.toLocaleString('id-ID', { month: 'long', timeZone: 'Asia/Jakarta' });
+    const dateBefore = new Date(now.getTime() - 24 * 60 * 60 * 1000).toLocaleDateString('en-US'); // tanggal sebelumnya
+    const dateAfter = new Date(now.getTime() + 24 * 60 * 60 * 1000).toLocaleDateString('en-US'); // tanggal berikutnya
+    const beforeIsSameMonth = bulan === new Date(dateBefore).toLocaleString('id-ID', { month: 'long', timeZone: 'Asia/Jakarta' }); // mengecek apakah bulan sebelumnya sama dengan bulan saat ini
+    const afterIsSameMonth = bulan === new Date(dateAfter).toLocaleString('id-ID', { month: 'long', timeZone: 'Asia/Jakarta' }); // mengecek apakah bulan sesudah sama dengan bulan saat ini
+
+    const res = await sheets.spreadsheets.values.get({ spreadsheetId, range: `${bulan}!B5:AG16` });
+    const res2 = await sheets.spreadsheets.values.get({ spreadsheetId, range: `${bulan}!A6:A16` });
+    const rows = res.data.values;
+    const data = {};
+    data.daftarPetugas = res2.data.values;
+    rows.forEach((row, rowIndex) => {
+      if (rowIndex === 0) {
+        row.forEach((row1) => {
+          data[row1] = [];
+        });
+      } else {
+        row.forEach((row1, i) => {
+          if (i == 31) return;
+          data[i + 1].push(row1);
+        });
+      }
+    });
+    const formattedDate = moment().format('dddd, DD MMM YYYY');
+    const hour = now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Jakarta' }).split(":")[0];
+    const piket = {};
+    piket.waktu = formattedDate;
+    piket.shift = (hour >= 8 && hour <= 15) ? 'P' : 'S';
+    piket.periode = (piket.shift == 'P') ? '08:00 - 16:00 WIB' : '16:00 - 08:00 WIB';
+    const date = now.toLocaleDateString(undefined, { timeZone: 'Asia/Jakarta' }).split('/')[1];
+    const petugasSekarang = (data[date] !== undefined) ? data[date].reduce((acc, sideData, i) => {
+      if (sideData == piket.shift) {
+        acc.push(data.daftarPetugas[i][0]);
+      }
+      return acc;
+    }, []) : ['-'];
+
+    piket.petugasSekarang = convertString(petugasSekarang);
+    piket.petugasSebelumnya = '-';
+    piket.petugasSelanjutnya = '-';
+    return piket;
+  } catch (error) {
+    console.log("Error: ", error);
+  }
+}
+
+module.exports = { searchPiket, searchGardu, getInquiryData, isNumber, isCoordinate, isSwitching, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData, getACMTData }

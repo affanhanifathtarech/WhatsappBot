@@ -1,12 +1,10 @@
 const qrcode = require('qrcode-terminal');
 const { MessageMedia, Client, Location, List, Buttons, LocalAuth } = require('whatsapp-web.js');
 const { log } = require('./functions.js');
-const { testButtons, scheduler, messageInfoControl, getCCDCCData, sendFromDCC, sendFromYandal, handleLocMessage, handleKWHMessage, handlePiketCS, handlePiketDCC, handlePiketCT, handlePiketYantekAll, handlePiketYantek, ping, sendMessageToNumber } = require('./controls.js');
+const { testButtons, scheduler, messageInfoControl, getCCDCCData, sendFromDCC, sendFromYandal, handleLocMessage, handleKWHMessage, handleGarduMessage, handlePiketCS, handlePiketDCC, handlePiketCT, handlePiketKeandalan, handlePiketYantekAll, handlePiketYantek, ping, sendMessageToNumber } = require('./controls.js');
 const client = new Client({ authStrategy: new LocalAuth({ clientId: "bot1" }), puppeteer: { headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' } });
 const client2 = new Client({ authStrategy: new LocalAuth({ clientId: "bot2" }), puppeteer: { headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' } });
 global.messageInfo = false;
-
-//AIzaSyDnv4mGySmUS-dAX_-GqU3wka0wfttzJg4
 
 // BOT HP UTAMA
 client.initialize();
@@ -23,10 +21,12 @@ client.on('message', async msg => {
     sendFromDCC(msg, client);                    // KIRIM DARI DARI GRUP DCC
     sendFromYandal(msg, client);                 // KIRIM DARI DARI GRUP YANDAL
     handleLocMessage(msg);                       // HANDLE PESAN LOC
-    handleKWHMessage(msg, client, MessageMedia); // HANDLE PESAN LOC
+    handleKWHMessage(msg, client, MessageMedia); // HANDLE PESAN KWH
+    handleGarduMessage(msg, client);             // HANDLE PESAN GARDU
     handlePiketCS(msg, client);                  // HANDLE PIKET CS
     handlePiketDCC(msg, client);                 // HANDLE PIKET DCC
     handlePiketCT(msg, client);                  // HANDLE PIKET CT
+    handlePiketKeandalan(msg, client);           // HANDLE PIKET KEANDALAN
     handlePiketYantekAll(msg, client);           // HANDLE PIKET YANTEK
     ping(msg, client);                           // PING
     sendMessageToNumber(msg, client);            // KIRIM PESAN KE NOMOR TERTENTU
@@ -45,10 +45,12 @@ client2.on('disconnected', (reason) => { log('BOT 2 Client was logged out', reas
 client2.on('message', async msg => {
     messageInfoControl(msg, client2);               // MENGIRIM MESSAGE INFO KE NOMOR 6282269599529 DAN CONSOLE LOG
     handleLocMessage(msg);                          // HANDLE PESAN LOC
-    handleKWHMessage(msg, client2, MessageMedia);   // HANDLE PESAN LOC
+    handleKWHMessage(msg, client2, MessageMedia);   // HANDLE PESAN KWH
+    handleGarduMessage(msg, client2);               // HANDLE PESAN GARDU
     handlePiketCS(msg, client2);                    // HANDLE PIKET CS
     handlePiketDCC(msg, client2);                   // HANDLE PIKET DCC
     handlePiketCT(msg, client2);                    // HANDLE PIKET CT
+    handlePiketKeandalan(msg, client2);             // HANDLE PIKET KEANDALAN
     handlePiketYantekAll(msg, client2);             // HANDLE PIKET YANTEK
     ping(msg, client2);                             // PING
     sendMessageToNumber(msg, client2);              // KIRIM PESAN KE NOMOR TERTENTU

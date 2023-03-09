@@ -1,5 +1,5 @@
 const schedule = require('node-schedule');
-const { isCoordinate, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData, getACMTData, isNumber, getInquiryData } = require('./functions.js');
+const { searchPiket, searchGardu, isCoordinate, formatString, search, readExcelData, piket, log, getPrepaidData, getPostpaidData, getACMTData, isNumber, getInquiryData } = require('./functions.js');
 const sharp = require('sharp');
 
 function scheduler(client, client2) {
@@ -274,21 +274,6 @@ Nama : ${(inquiryData.customer_name) != '' ? inquiryData.customer_name : ACMTDat
 Tarif : ${(inquiryData.segmentation) != '' ? inquiryData.segmentation : ACMTData.tarif}
 Daya : ${!isNaN(inquiryData.power) ? inquiryData.power : ACMTData.daya}${(ACMTData.gardu === '' || ACMTData.gardu === undefined) ? '' : `\nGardu : ${ACMTData.gardu}`}${(ACMTData.tiang === '' || ACMTData.tiang === undefined) ? '' : `\nTiang : ${ACMTData.tiang}`}${(ACMTData.merk_meter === '' || ACMTData.merk_meter === undefined) ? '' : `\nMerk : ${ACMTData.merk_meter}`}${(ACMTData.latitude === '' || ACMTData.longitude === '' || ACMTData.latitude === undefined || ACMTData.longitude === undefined) ? '' : `\n\nLokasi : \nhttps://maps.google.com/maps?q=${ACMTData.latitude}8%2C${ACMTData.longitude}`}`;
 
-                        // // asumsi 'blob' berisi data gambar blob yang ingin dipertajam
-                        // const image = sharp(Buffer.from(media.data, 'base64'));
-
-                        // // pertajam gambar
-                        // image.sharpen();
-
-                        // // konversi gambar menjadi base64
-                        // image.toBuffer((err, data, info) => {
-                        //     if (err) {
-                        //         log(err);
-                        //     } else {
-                        //         media.data = data.toString('base64');
-                        //     }
-                        // });
-
                         media.mimetype = "image/jpg";
                         media.filename = `KWH ${ACMTData.idpel} - ${ACMTData.blth}`;
                         clearTimeout(timeout);
@@ -305,6 +290,61 @@ Daya : ${!isNaN(inquiryData.power) ? inquiryData.power : ACMTData.daya}${(ACMTDa
                 clearTimeout(timeout);
                 client.sendMessage(msg.from, error.message);
             });
+    }
+}
+
+async function handleGarduMessage(msg, client) {
+    // HANDLE PESAN GARDU
+    if (msg.body.toLowerCase().startsWith('cek gardu ')) {
+
+        const searchingGardu = msg.body.toLowerCase().replace(/^(cek gardu) /, '').trim();
+        let timeout = setTimeout(() => {
+            client.sendMessage(msg.from, "Mohon menunggu...");
+        }, 3000);
+
+        await searchGardu(formatString(searchingGardu).toUpperCase())
+            .then((gardu) => {
+                const theMessage = `*DATA GARDU ${gardu.namaGardu}*
+
+Alamat : ${gardu.alamat}
+Penyulang : ${gardu.penyulang}
+Section : ${gardu.section}
+Tipe : ${gardu.tipe}
+Merk : ${gardu.merk}
+Kapasitas Daya : ${gardu.daya} kVA
+Tahun : ${gardu.tahun}
+Jurusan TR : ${gardu.jurTerpakai}/${gardu.jurTerpasang}
+Tap Trafo : ${gardu.tap}
+
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
+*----- PENGUKURAN WBP -----*
+Tanggal/Waktu : ${gardu.wbp.tglUkur} ${gardu.wbp.jamUkur}
+Arus utama (A): ${gardu.wbp.arusUtama[0]} | ${gardu.wbp.arusUtama[1]} | ${gardu.wbp.arusUtama[2]} | ${gardu.wbp.arusUtama[3]}
+Arus jur 1 (A) : ${gardu.wbp.arus1[0]} | ${gardu.wbp.arus1[1]} | ${gardu.wbp.arus1[2]} | ${gardu.wbp.arus1[3]}${(gardu.wbp.arus2[0] === '') ? '' : `\nArus jur 2 (A) : ${gardu.wbp.arus2[0]} | ${gardu.wbp.arus2[1]} | ${gardu.wbp.arus2[2]} | ${gardu.wbp.arus2[3]}`}${(gardu.wbp.arus3[0] === '') ? '' : `\nArus jur 3 (A) : ${gardu.wbp.arus3[0]} | ${gardu.wbp.arus3[1]} | ${gardu.wbp.arus3[2]} | ${gardu.wbp.arus3[3]}`}${(gardu.wbp.arus4[0] === '') ? '' : `\nArus jur 4 (A) : ${gardu.wbp.arus4[0]} | ${gardu.wbp.arus4[1]} | ${gardu.wbp.arus4[2]} | ${gardu.wbp.arus4[3]}`} 
+Teg. RS/ST/TR (V) : ${gardu.wbp.tegangan[0]} | ${gardu.wbp.tegangan[1]} | ${gardu.wbp.tegangan[2]}
+Teg. RN/SN/TN (V) : ${gardu.wbp.tegangan[3]} | ${gardu.wbp.tegangan[4]} | ${gardu.wbp.tegangan[5]}
+Pembebanan : ${gardu.wbp.beban[0]} kVA | ${gardu.wbp.beban[1]} kW | ${gardu.wbp.beban[2].replace('%', '')} %
+Keterangan : ${gardu.wbp.status[0]}${(gardu.wbp.status[1] === '' || gardu.wbp.status[1] === undefined) ? '' : ` ,${gardu.wbp.status[1]}`}
+
+*----- PENGUKURAN LWBP -----*
+Tanggal/Waktu : ${gardu.lwbp.tglUkur} ${gardu.lwbp.jamUkur}
+Arus utama (A): ${gardu.lwbp.arusUtama[0]} | ${gardu.lwbp.arusUtama[1]} | ${gardu.lwbp.arusUtama[2]} | ${gardu.lwbp.arusUtama[3]}
+Arus jur 1 (A) : ${gardu.lwbp.arus1[0]} | ${gardu.lwbp.arus1[1]} | ${gardu.lwbp.arus1[2]} | ${gardu.lwbp.arus1[3]}${(gardu.lwbp.arus2[0] === '') ? '' : `\nArus jur 2 (A) : ${gardu.lwbp.arus2[0]} | ${gardu.lwbp.arus2[1]} | ${gardu.lwbp.arus2[2]} | ${gardu.lwbp.arus2[3]}`}${(gardu.lwbp.arus3[0] === '') ? '' : `\nArus jur 3 (A) : ${gardu.lwbp.arus3[0]} | ${gardu.lwbp.arus3[1]} | ${gardu.lwbp.arus3[2]} | ${gardu.lwbp.arus3[3]}`}${(gardu.lwbp.arus4[0] === '') ? '' : `\nArus jur 4 (A) : ${gardu.lwbp.arus4[0]} | ${gardu.lwbp.arus4[1]} | ${gardu.lwbp.arus4[2]} | ${gardu.lwbp.arus4[3]}`} 
+Teg. RS/ST/TR (V) : ${gardu.lwbp.tegangan[0]} | ${gardu.lwbp.tegangan[1]} | ${gardu.lwbp.tegangan[2]}
+Teg. RN/SN/TN (V) : ${gardu.lwbp.tegangan[3]} | ${gardu.lwbp.tegangan[4]} | ${gardu.lwbp.tegangan[5]}
+Pembebanan : ${gardu.lwbp.beban[0]} kVA | ${gardu.lwbp.beban[1]} kW | ${gardu.lwbp.beban[2].replace('%', '')} %
+Keterangan : ${gardu.lwbp.status[0]}${(gardu.lwbp.status[1] === '' || gardu.lwbp.status[1] === undefined) ? '' : ` ,${gardu.lwbp.status[1]}`}`
+
+                clearTimeout(timeout);
+                client.sendMessage(msg.from, theMessage);
+
+            })
+            .catch((err) => {
+                log(err)
+                clearTimeout(timeout);
+                client.sendMessage(msg.from, 'Maaf, data tidak ditemukan');
+            });
+
     }
 }
 
@@ -343,7 +383,23 @@ function handlePiketCT(msg, client) {
 *Periode        : ${piketCT.periode}*
 
 Petugas Selanjutnya : ${piketCT.piketSelanjutnya}
-Petugas Sebelum : ${piketCT.piketSebelum}`);
+Petugas Sebelumnya : ${piketCT.piketSebelum}`);
+        })
+    }
+}
+
+function handlePiketKeandalan(msg, client) {
+    // CEK PETUGAS PIKET KEANDALAN
+    if (msg.body.toLowerCase() === 'cek piket keandalan') {
+        searchPiket().then(piketKeandalan => {
+            client.sendMessage(msg.from, `*PETUGAS PIKET KEANDALAN*
+
+*Hari/Tanggal   : ${piketKeandalan.waktu}*
+*Petugas        : ${piketKeandalan.petugasSekarang}*
+*Periode        : ${piketKeandalan.periode}*
+
+Petugas Selanjutnya : ${piketKeandalan.petugasSelanjutnya}
+Petugas Sebelumnya: ${piketKeandalan.petugasSebelumnya}`);
         })
     }
 }
@@ -421,9 +477,11 @@ module.exports = {
     sendFromYandal,         // KIRIM DARI DARI GRUP YANDAL
     handleLocMessage,       // HANDLE PESAN LOC
     handleKWHMessage,       // HANDLE PESAN KWH
+    handleGarduMessage,     // HANDLE PESAN GARDU
     handlePiketCS,          // HANDLE PIKET CS
     handlePiketDCC,         // HANDLE PIKET DCC
     handlePiketCT,          // HANDLE PIKET CT
+    handlePiketKeandalan,   // HANDLE PIKET KEANDALAN
     handlePiketYantekAll,   // HANDLE PIKET YANTEK SEMUA
     handlePiketYantek,      // HANDLE PIKET YANTEK PER POSKO
     ping,                   // PING
